@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 11</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+  /* Setup wallpaper previews */
+  .desktop-bg-preview { width:100%;height:100%; }
+</style>
+</head>
+<body>
+
+<!-- ── FIRST-RUN SETUP ──────────────────────────────────────────────────────── -->
+<div id="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div id="setup-step-1">
+      <div class="setup-steps">
+        <div class="step-dot active" id="sd1"></div>
+        <div class="step-dot" id="sd2"></div>
+        <div class="step-dot" id="sd3"></div>
+      </div>
+      <h1>Welcome to Windows 11</h1>
+      <p>Let's set up your account on this device. Your data will be stored locally — no Microsoft account required.</p>
+      <div class="form-group">
+        <label>Your name</label>
+        <input type="text" id="s-name" placeholder="e.g. Xavier" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="s-username" placeholder="e.g. xavier (lowercase, no spaces)" autocomplete="off">
+      </div>
+      <div class="setup-error" id="s-err1"></div>
+      <button class="btn-primary" onclick="setupStep1()">Next →</button>
+    </div>
+
+    <div id="setup-step-2" style="display:none">
+      <div class="setup-steps">
+        <div class="step-dot done" id="sd1b"></div>
+        <div class="step-dot active" id="sd2b"></div>
+        <div class="step-dot" id="sd3b"></div>
+      </div>
+      <h1>Choose a password</h1>
+      <p>This keeps your account secure on this device. You can also set a quick PIN in Settings later.</p>
+      <div class="form-group">
+        <label>Password (min. 4 characters)</label>
+        <input type="password" id="s-pw" placeholder="Enter password" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirm password</label>
+        <input type="password" id="s-pw2" placeholder="Re-enter password" autocomplete="new-password">
+      </div>
+      <div class="setup-error" id="s-err2"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" style="background:rgba(255,255,255,.1);color:#fff" onclick="document.getElementById('setup-step-1').style.display='';document.getElementById('setup-step-2').style.display='none'">← Back</button>
+        <button class="btn-primary" onclick="setupStep2()">Next →</button>
+      </div>
+    </div>
+
+    <div id="setup-step-3" style="display:none">
+      <div class="setup-steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+      <h1>Personalize your account</h1>
+      <p>Choose an avatar color — you can always change it later in Settings.</p>
+      <div style="margin-bottom:20px">
+        <div id="avatar-preview" style="width:72px;height:72px;border-radius:50%;background:#0078d4;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;margin-bottom:16px;border:3px solid rgba(255,255,255,.3)" id="av-preview">X</div>
+        <div class="avatar-picker" id="setup-colors"></div>
+      </div>
+      <div class="form-group">
+        <label>Email address (optional)</label>
+        <input type="email" id="s-email" placeholder="user@example.com">
+      </div>
+      <div class="setup-error" id="s-err3"></div>
+      <button class="btn-primary" id="setup-finish-btn" onclick="setupFinish()">Create account & Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOCK SCREEN ──────────────────────────────────────────────────────────── -->
+<div id="lock-screen" onclick="wakeScreen()">
+  <div id="lock-blur-overlay"></div>
+  <div id="lock-time">00:00</div>
+  <div id="lock-date">Day, Month 00, 0000</div>
+  <div id="lock-hint">Click anywhere to sign in</div>
+
+  <!-- Login panel (hidden until click) -->
+  <div id="login-panel" onclick="event.stopPropagation()">
+    <div id="user-select"></div>
+
+    <!-- Tabs: Password / PIN -->
+    <div id="login-tabs-wrap" style="width:320px;margin-bottom:12px">
+      <div class="login-tabs">
+        <div class="login-tab active" id="tab-pw"   onclick="switchTab('pw')">Password</div>
+        <div class="login-tab"        id="tab-pin"  onclick="switchTab('pin')">PIN</div>
+      </div>
+    </div>
+
+    <!-- Password form -->
+    <div id="login-form">
+      <div class="login-input-wrap">
+        <input type="password" id="login-pw-input" placeholder="Password"
+          onkeydown="if(event.key==='Enter')doLogin()"
+          autocomplete="current-password">
+        <div class="reveal-btn" onclick="toggleReveal()">
+          <svg id="eye-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="login-error" id="login-err"></div>
+      <button class="btn-primary" onclick="doLogin()">Sign in →</button>
+      <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.4);text-align:center;cursor:pointer" onclick="wakeScreen()">← Back</div>
+    </div>
+
+    <!-- PIN form -->
+    <div id="pin-form" style="display:none">
+      <div class="pin-display" id="pin-dots"></div>
+      <div id="pin-pad"></div>
+      <div class="login-error" id="pin-err"></div>
+      <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,.4);text-align:center;cursor:pointer" onclick="switchTab('pw')">Use password instead</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/icons.js"></script>
+
+<script>
+// ── Colors ───────────────────────────────────────────────────────────────────
+const AVATAR_COLORS = ['#0078d4','#8764b8','#ef6950','#038387','#107c10','#ca5010','#e3008c','#004e8c'];
+let setupData    = {};
+let chosenColor  = AVATAR_COLORS[0];
+let selectedUser = null;
+let pinBuffer    = '';
+
+// ── Clock ────────────────────────────────────────────────────────────────────
+function updateLockClock() {
+  const now  = new Date();
+  const t    = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const d    = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('lock-time').textContent = t;
+  document.getElementById('lock-date').textContent = d;
+}
+updateLockClock();
+setInterval(updateLockClock, 1000);
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  const hasAccounts = await DB.hasAnyAccounts();
+
+  if (!hasAccounts) {
+    // First run
+    document.getElementById('lock-screen').style.display  = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+    buildColorPicker();
+    return;
+  }
+
+  // Check if already logged in
+  const user = await Auth.getCurrentUser();
+  if (user) {
+    window.location.href = 'desktop.html';
+    return;
+  }
+
+  // Show lock screen
+  document.getElementById('lock-screen').style.display = 'flex';
+  await buildUserSelect();
+}
+
+// ── User tiles ───────────────────────────────────────────────────────────────
+async function buildUserSelect() {
+  const users = await DB.getAllAccounts();
+  const container = document.getElementById('user-select');
+
+  // Pre-select user from switchUser flow
+  const preselId = parseInt(localStorage.getItem('win11_lock_user'));
+  const presel   = users.find(u => u.id === preselId) || users[0];
+  selectedUser   = presel;
+  localStorage.removeItem('win11_lock_user');
+
+  container.innerHTML = users.map(u => `
+    <div class="user-tile ${u.id === presel?.id ? 'selected' : ''}" id="ut-${u.id}" onclick="selectUser(${u.id})">
+      <div class="user-avatar" style="background:${u.avatarColor}">${u.avatarInitial}</div>
+      <div class="user-name">${u.displayName}</div>
+    </div>`).join('');
+
+  // Show/hide PIN tab
+  updatePinTab();
+}
+
+function selectUser(id) {
+  DB.getAllAccounts().then(users => {
+    selectedUser = users.find(u => u.id === id);
+    document.querySelectorAll('.user-tile').forEach(t => t.classList.toggle('selected', t.id === 'ut-' + id));
+    updatePinTab();
+    pinBuffer = '';
+    renderPinDots();
+    document.getElementById('login-err').textContent = '';
+    document.getElementById('pin-err').textContent   = '';
+  });
+}
+
+function updatePinTab() {
+  const hasPIN = selectedUser?.pin;
+  document.getElementById('login-tabs-wrap').style.display = hasPIN ? '' : 'none';
+}
+
+// ── Wake screen ───────────────────────────────────────────────────────────────
+function wakeScreen() {
+  const ls = document.getElementById('lock-screen');
+  const lp = document.getElementById('login-panel');
+  const hints = document.getElementById('lock-hint');
+  if (lp.classList.contains('visible')) {
+    // Already visible — hide
+    lp.classList.remove('visible');
+    ls.classList.remove('unlocking');
+    hints.style.display = '';
+    return;
+  }
+  ls.classList.add('unlocking');
+  hints.style.display = 'none';
+  lp.classList.add('visible');
+  setTimeout(() => document.getElementById('login-pw-input').focus(), 200);
+}
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-pw').classList.toggle('active', tab === 'pw');
+  document.getElementById('tab-pin').classList.toggle('active', tab === 'pin');
+  document.getElementById('login-form').style.display = tab === 'pw'  ? '' : 'none';
+  document.getElementById('pin-form').style.display   = tab === 'pin' ? '' : 'none';
+  if (tab === 'pin') { pinBuffer = ''; renderPinDots(); buildPinPad(); }
+}
+
+// ── Password login ─────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw  = document.getElementById('login-pw-input').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!selectedUser) { err.textContent = 'Select a user first'; return; }
+  try {
+    await Auth.login(selectedUser.username, pw);
+    goDesktop();
+  } catch(e) {
+    err.textContent = e.message;
+    document.getElementById('login-pw-input').select();
+  }
+}
+
+function toggleReveal() {
+  const inp = document.getElementById('login-pw-input');
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+}
+
+// ── PIN login ──────────────────────────────────────────────────────────────────
+function buildPinPad() {
+  const pad = document.getElementById('pin-pad');
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  pad.innerHTML = keys.map(k => `<div class="pin-key ${k==='⌫'?'back':''}" onclick="pinPress('${k}')">${k}</div>`).join('');
+}
+
+function pinPress(k) {
+  if (k === '⌫') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (k === '') return;
+  else if (pinBuffer.length < 8) pinBuffer += k;
+  renderPinDots();
+  if (pinBuffer.length >= 4) tryPin();
+}
+
+function renderPinDots() {
+  const len = selectedUser?.pin?.length || 6;
+  document.getElementById('pin-dots').innerHTML =
+    Array.from({ length: len }, (_, i) => `<div class="pin-dot ${i < pinBuffer.length ? 'filled' : ''}"></div>`).join('');
+}
+
+async function tryPin() {
+  if (!selectedUser?.pin) return;
+  if (pinBuffer.length < selectedUser.pin.length) return;
+  const err = document.getElementById('pin-err');
+  try {
+    await Auth.loginWithPin(selectedUser.id, pinBuffer);
+    goDesktop();
+  } catch(e) {
+    err.textContent = 'Incorrect PIN';
+    setTimeout(() => { pinBuffer = ''; renderPinDots(); err.textContent = ''; }, 1000);
+  }
+}
+
+function goDesktop() {
+  document.getElementById('lock-screen').style.opacity = '0';
+  setTimeout(() => window.location.href = 'desktop.html', 600);
+}
+
+// ── Setup flow ────────────────────────────────────────────────────────────────
+function buildColorPicker() {
+  const container = document.getElementById('setup-colors');
+  container.innerHTML = AVATAR_COLORS.map((c,i) =>
+    `<div class="avatar-swatch ${i===0?'selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
+  ).join('');
+}
+
+function pickColor(c, el) {
+  chosenColor = c;
+  document.querySelectorAll('.avatar-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  const prev = document.getElementById('avatar-preview');
+  if (prev) prev.style.background = c;
+}
+
+function setupStep1() {
+  const name = document.getElementById('s-name').value.trim();
+  const user = document.getElementById('s-username').value.trim().toLowerCase().replace(/\s+/g,'');
+  const err  = document.getElementById('s-err1');
+  if (!name)        { err.textContent = 'Please enter your name'; return; }
+  if (!user)        { err.textContent = 'Please choose a username'; return; }
+  if (!/^[a-z0-9_]+$/.test(user)) { err.textContent = 'Username: letters, numbers, underscores only'; return; }
+  setupData.name = name; setupData.username = user;
+  // Update avatar initial
+  const prev = document.getElementById('avatar-preview');
+  if (prev) prev.textContent = name[0].toUpperCase();
+  err.textContent = '';
+  document.getElementById('setup-step-1').style.display = 'none';
+  document.getElementById('setup-step-2').style.display = '';
+}
+
+function setupStep2() {
+  const pw  = document.getElementById('s-pw').value;
+  const pw2 = document.getElementById('s-pw2').value;
+  const err = document.getElementById('s-err2');
+  if (pw.length < 4) { err.textContent = 'Password must be at least 4 characters'; return; }
+  if (pw !== pw2)     { err.textContent = "Passwords don't match"; return; }
+  setupData.password = pw;
+  err.textContent = '';
+  document.getElementById('setup-step-2').style.display = 'none';
+  document.getElementById('setup-step-3').style.display = '';
+}
+
+async function setupFinish() {
+  const btn = document.getElementById('setup-finish-btn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const email = document.getElementById('s-email').value.trim();
+    await Auth.createAccount(setupData.name, setupData.username, setupData.password, {
+      avatarColor: chosenColor, email, isAdmin: true
+    });
+    await Auth.login(setupData.username, setupData.password);
+    window.location.href = 'desktop.html';
+  } catch(e) {
+    document.getElementById('s-err3').textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Create account & Sign in';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
